@@ -9,6 +9,7 @@ import '../services/csv_service.dart';
 import '../utils/file_helper.dart';
 import 'event_detail_screen.dart';
 import 'event_form_screen.dart';
+import 'filter_dialog.dart';
 import 'contact_list_screen.dart';
 
 class EventListScreen extends StatefulWidget {
@@ -19,6 +20,10 @@ class EventListScreen extends StatefulWidget {
 }
 
 class _EventListScreenState extends State<EventListScreen> {
+  String? _searchText;
+  AttendanceStatus? _statusFilter;
+  DateTime? _dateFilter;
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +31,85 @@ class _EventListScreenState extends State<EventListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EventProvider>().loadEvents();
     });
+  }
+
+  List<Event> _applyFilters(List<Event> events) {
+    var filteredEvents = events;
+
+    // Filter by search text (event name or participant name)
+    if (_searchText != null && _searchText!.isNotEmpty) {
+      filteredEvents = filteredEvents.where((event) {
+        // Search in event title
+        if (event.title.toLowerCase().contains(_searchText!.toLowerCase())) {
+          return true;
+        }
+        // Search in event location
+        if (event.location.toLowerCase().contains(_searchText!.toLowerCase())) {
+          return true;
+        }
+        // Search in participant names
+        for (var participant in event.participants) {
+          if (participant.name.toLowerCase().contains(_searchText!.toLowerCase())) {
+            return true;
+          }
+          if (participant.email.toLowerCase().contains(_searchText!.toLowerCase())) {
+            return true;
+          }
+        }
+        return false;
+      }).toList();
+    }
+
+    // Filter by attendance status
+    if (_statusFilter != null) {
+      filteredEvents = filteredEvents.where((event) {
+        return event.participants.any((p) => p.status == _statusFilter);
+      }).toList();
+    }
+
+    // Filter by date
+    if (_dateFilter != null) {
+      filteredEvents = filteredEvents.where((event) {
+        return event.dateTime.year == _dateFilter!.year &&
+            event.dateTime.month == _dateFilter!.month &&
+            event.dateTime.day == _dateFilter!.day;
+      }).toList();
+    }
+
+    return filteredEvents;
+  }
+
+  bool get _hasActiveFilters =>
+      _searchText != null || _statusFilter != null || _dateFilter != null;
+
+  void _showFilterDialog() async {
+    final result = await showDialog<FilterResult>(
+      context: context,
+      builder: (context) => FilterDialog(
+        currentSearchText: _searchText,
+        currentStatusFilter: _statusFilter,
+        currentDateFilter: _dateFilter,
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _searchText = result.searchText;
+        _statusFilter = result.statusFilter;
+        _dateFilter = result.dateFilter;
+      });
+    }
+  }
+
+  String _getStatusText(AttendanceStatus status) {
+    switch (status) {
+      case AttendanceStatus.attending:
+        return '出席';
+      case AttendanceStatus.declined:
+        return '欠席';
+      case AttendanceStatus.pending:
+        return '保留';
+    }
   }
 
   Future<void> _importCsv(BuildContext context) async {
@@ -113,6 +197,14 @@ class _EventListScreenState extends State<EventListScreen> {
         title: const Text('Roster Share'),
         actions: [
           IconButton(
+            icon: Badge(
+              isLabelVisible: _hasActiveFilters,
+              child: const Icon(Icons.filter_list),
+            ),
+            tooltip: 'フィルター',
+            onPressed: _showFilterDialog,
+          ),
+          IconButton(
             icon: const Icon(Icons.contacts),
             tooltip: '参加者リスト',
             onPressed: () {
@@ -174,6 +266,9 @@ class _EventListScreenState extends State<EventListScreen> {
             );
           }
 
+          // Apply filters
+          final filteredEvents = _applyFilters(provider.events);
+
           if (provider.events.isEmpty) {
             return Center(
               child: Column(
@@ -199,13 +294,94 @@ class _EventListScreenState extends State<EventListScreen> {
             );
           }
 
-          return ListView.separated(
-            itemCount: provider.events.length,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              final event = provider.events[index];
-              return _EventListItem(event: event);
-            },
+          if (filteredEvents.isEmpty && _hasActiveFilters) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.filter_list_off,
+                    size: 64,
+                    color: Colors.black12,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '条件に一致するイベントがありません',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _searchText = null;
+                        _statusFilter = null;
+                        _dateFilter = null;
+                      });
+                    },
+                    child: const Text('フィルターをクリア'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              // Filter chips display
+              if (_hasActiveFilters)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (_searchText != null)
+                        Chip(
+                          label: Text('検索: $_searchText'),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            setState(() {
+                              _searchText = null;
+                            });
+                          },
+                        ),
+                      if (_statusFilter != null)
+                        Chip(
+                          label: Text('ステータス: ${_getStatusText(_statusFilter!)}'),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            setState(() {
+                              _statusFilter = null;
+                            });
+                          },
+                        ),
+                      if (_dateFilter != null)
+                        Chip(
+                          label: Text(
+                            '日付: ${_dateFilter!.year}/${_dateFilter!.month}/${_dateFilter!.day}',
+                          ),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            setState(() {
+                              _dateFilter = null;
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: filteredEvents.length,
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final event = filteredEvents[index];
+                    return _EventListItem(event: event);
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
