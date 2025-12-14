@@ -8,6 +8,7 @@ class Participant {
   String id;
   String name;
   String email;
+  String? className;  // クラス名 (例: 3年A組)
   AttendanceStatus status;
   String? notes;
   DateTime? respondedAt;
@@ -16,6 +17,7 @@ class Participant {
     required this.id,
     required this.name,
     required this.email,
+    this.className,
     this.status = AttendanceStatus.pending,
     this.notes,
     this.respondedAt,
@@ -27,6 +29,7 @@ class Participant {
       'id': id,
       'name': name,
       'email': email,
+      'className': className,
       'status': status.index,
       'notes': notes,
       'respondedAt': respondedAt?.millisecondsSinceEpoch,
@@ -39,6 +42,7 @@ class Participant {
       id: map['id'] as String,
       name: map['name'] as String,
       email: map['email'] as String,
+      className: map['className'] as String?,
       status: AttendanceStatus.values[map['status'] as int],
       notes: map['notes'] as String?,
       respondedAt: map['respondedAt'] != null

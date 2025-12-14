@@ -720,6 +720,15 @@ class _ParticipantItem extends StatelessWidget {
                           ),
                     ),
                     const SizedBox(height: 2),
+                    if (participant.className != null && participant.className!.isNotEmpty)
+                      Text(
+                        'クラス: ${participant.className}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                    const SizedBox(height: 2),
                     Text(
                       participant.email,
                       style: Theme.of(context).textTheme.bodySmall,

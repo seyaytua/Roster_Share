@@ -41,6 +41,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
           id: p.id,
           nameController: TextEditingController(text: p.name),
           emailController: TextEditingController(text: p.email),
+          classNameController: TextEditingController(text: p.className ?? ''),
         ));
       }
     }
@@ -54,6 +55,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     for (var p in _participants) {
       p.nameController.dispose();
       p.emailController.dispose();
+      p.classNameController.dispose();
     }
     super.dispose();
   }
@@ -233,6 +235,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
             id: const Uuid().v4(),
             nameController: TextEditingController(text: contact.name),
             emailController: TextEditingController(text: contact.email),
+            classNameController: TextEditingController(text: contact.className ?? ''),
           ));
         }
       });
@@ -245,6 +248,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
         id: const Uuid().v4(),
         nameController: TextEditingController(),
         emailController: TextEditingController(),
+        classNameController: TextEditingController(),
       ));
     });
   }
@@ -253,6 +257,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     setState(() {
       _participants[index].nameController.dispose();
       _participants[index].emailController.dispose();
+      _participants[index].classNameController.dispose();
       _participants.removeAt(index);
     });
   }
@@ -282,6 +287,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
         id: p.id,
         name: p.nameController.text,
         email: p.emailController.text,
+        className: p.classNameController.text.isEmpty ? null : p.classNameController.text,
         status: AttendanceStatus.pending,
       );
     }).toList();
@@ -322,11 +328,13 @@ class _ParticipantForm {
   final String id;
   final TextEditingController nameController;
   final TextEditingController emailController;
+  final TextEditingController classNameController;
 
   _ParticipantForm({
     required this.id,
     required this.nameController,
     required this.emailController,
+    required this.classNameController,
   });
 }
 
@@ -485,6 +493,19 @@ class _ParticipantFormWidget extends StatelessWidget {
                   onPressed: onRemove,
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: participant.classNameController,
+              decoration: const InputDecoration(
+                labelText: 'クラス (任意)',
+                hintText: '例: 3年A組',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             TextFormField(

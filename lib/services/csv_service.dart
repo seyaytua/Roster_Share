@@ -16,6 +16,7 @@ class CsvService {
       '場所',
       'イベントメモ',
       '参加者名',
+      'クラス',
       'メールアドレス',
       '出欠ステータス',
       '参加者メモ',
@@ -40,6 +41,7 @@ class CsvService {
           '',
           '',
           '',
+          '',
         ]);
       } else {
         // Event with participants (one row per participant)
@@ -52,6 +54,7 @@ class CsvService {
             event.location,
             event.notes ?? '',
             participant.name,
+            participant.className ?? '',
             participant.email,
             _getStatusText(participant.status),
             participant.notes ?? '',
@@ -88,7 +91,7 @@ class CsvService {
     Map<String, _EventBuilder> eventBuilders = {};
 
     for (var row in dataRows) {
-      if (row.length < 11) continue;
+      if (row.length < 12) continue;
 
       final eventId = row[0].toString();
       final eventTitle = row[1].toString();
@@ -111,16 +114,18 @@ class CsvService {
       // Add participant if exists
       final participantName = row[6].toString();
       if (participantName.isNotEmpty) {
-        final participantEmail = row[7].toString();
-        final statusText = row[8].toString();
-        final participantNotes = row[9].toString();
-        final respondedAtText = row[10].toString();
+        final participantClassName = row[7].toString();
+        final participantEmail = row[8].toString();
+        final statusText = row[9].toString();
+        final participantNotes = row[10].toString();
+        final respondedAtText = row[11].toString();
 
         eventBuilders[eventId]!.participants.add(Participant(
           id: DateTime.now().millisecondsSinceEpoch.toString() +
               participantEmail,
           name: participantName,
           email: participantEmail,
+          className: participantClassName.isEmpty ? null : participantClassName,
           status: _parseStatusText(statusText),
           notes: participantNotes.isEmpty ? null : participantNotes,
           respondedAt: respondedAtText.isEmpty

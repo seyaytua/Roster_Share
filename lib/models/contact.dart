@@ -3,6 +3,7 @@ class Contact {
   String id;
   String name;
   String email;
+  String? className;
   String? phone;
   String? organization;
   String? notes;
@@ -13,6 +14,7 @@ class Contact {
     required this.id,
     required this.name,
     required this.email,
+    this.className,
     this.phone,
     this.organization,
     this.notes,
@@ -26,6 +28,7 @@ class Contact {
       'id': id,
       'name': name,
       'email': email,
+      'className': className,
       'phone': phone,
       'organization': organization,
       'notes': notes,
@@ -40,6 +43,7 @@ class Contact {
       id: map['id'] as String,
       name: map['name'] as String,
       email: map['email'] as String,
+      className: map['className'] as String?,
       phone: map['phone'] as String?,
       organization: map['organization'] as String?,
       notes: map['notes'] as String?,
