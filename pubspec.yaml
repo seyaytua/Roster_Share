@@ -59,6 +59,13 @@ dependencies:
   
   # File picker for import
   file_picker: 8.1.6
+  
+  # Google APIs for Drive integration
+  googleapis: 13.2.0
+  googleapis_auth: 1.6.0
+  
+  # Microsoft Graph API for OneDrive/SharePoint
+  flutter_web_auth: 0.5.0
 
 dev_dependencies:
   flutter_test:

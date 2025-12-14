@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/event_provider.dart';
 import '../models/event.dart';
 import '../services/csv_service.dart';
+import '../services/cloud_storage_service.dart';
 import '../utils/file_helper.dart';
 import 'event_form_screen.dart';
 
@@ -93,25 +94,57 @@ class EventDetailScreen extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.cloud_queue),
                 title: const Text('Google Drive'),
-                subtitle: const Text('CSVをダウンロードしてアップロード'),
+                subtitle: const Text('直接アップロード'),
+                trailing: const Icon(Icons.upload_file, size: 20),
+                onTap: () {
+                  Navigator.pop(context);
+                  _uploadToGoogleDrive(context, event);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cloud_queue, color: Colors.grey),
+                title: const Text('Google Drive (手動)'),
+                subtitle: const Text('ダウンロード→手動アップロード'),
                 onTap: () {
                   Navigator.pop(context);
                   _shareToGoogleDrive(context, event);
                 },
               ),
+              const Divider(),
               ListTile(
                 leading: const Icon(Icons.cloud),
                 title: const Text('OneDrive'),
-                subtitle: const Text('CSVをダウンロードしてアップロード'),
+                subtitle: const Text('直接アップロード'),
+                trailing: const Icon(Icons.upload_file, size: 20),
+                onTap: () {
+                  Navigator.pop(context);
+                  _uploadToOneDrive(context, event);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cloud, color: Colors.grey),
+                title: const Text('OneDrive (手動)'),
+                subtitle: const Text('ダウンロード→手動アップロード'),
                 onTap: () {
                   Navigator.pop(context);
                   _shareToOneDrive(context, event);
                 },
               ),
+              const Divider(),
               ListTile(
                 leading: const Icon(Icons.business),
                 title: const Text('SharePoint'),
-                subtitle: const Text('CSVをダウンロードしてアップロード'),
+                subtitle: const Text('直接アップロード'),
+                trailing: const Icon(Icons.upload_file, size: 20),
+                onTap: () {
+                  Navigator.pop(context);
+                  _uploadToSharePoint(context, event);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.business, color: Colors.grey),
+                title: const Text('SharePoint (手動)'),
+                subtitle: const Text('ダウンロード→手動アップロード'),
                 onTap: () {
                   Navigator.pop(context);
                   _shareToSharePoint(context, event);
@@ -152,6 +185,91 @@ class EventDetailScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _uploadToGoogleDrive(BuildContext context, Event event) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Google Driveにアップロード中...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final csvService = CsvService();
+      final csvContent = csvService.exportEventToCsv(event);
+      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+
+      final cloudService = CloudStorageService();
+      final shareLink = await cloudService.uploadToGoogleDrive(
+        fileName: filename,
+        content: csvContent,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('✅ アップロード成功'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Google Driveにアップロードしました！'),
+                const SizedBox(height: 16),
+                if (shareLink != null) ...[
+                  const Text('共有リンク:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    shareLink,
+                    style: const TextStyle(fontSize: 12, color: Colors.blue),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              if (shareLink != null)
+                TextButton(
+                  onPressed: () {
+                    FileHelper.openUrlInNewTab(shareLink);
+                  },
+                  child: const Text('開く'),
+                ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('閉じる'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('アップロードエラー: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        
+        // Fallback to manual method
+        _shareToGoogleDrive(context, event);
+      }
+    }
+  }
+
   void _shareToGoogleDrive(BuildContext context, Event event) {
     // First download the CSV
     _downloadCsv(context, event);
@@ -169,6 +287,176 @@ class EventDetailScreen extends StatelessWidget {
         );
       }
     });
+  }
+
+  Future<void> _uploadToOneDrive(BuildContext context, Event event) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('OneDriveにアップロード中...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final csvService = CsvService();
+      final csvContent = csvService.exportEventToCsv(event);
+      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+
+      final cloudService = CloudStorageService();
+      final shareLink = await cloudService.uploadToOneDrive(
+        fileName: filename,
+        content: csvContent,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('✅ アップロード成功'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('OneDriveにアップロードしました！'),
+                const SizedBox(height: 16),
+                if (shareLink != null) ...[
+                  const Text('共有リンク:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    shareLink,
+                    style: const TextStyle(fontSize: 12, color: Colors.blue),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              if (shareLink != null)
+                TextButton(
+                  onPressed: () {
+                    FileHelper.openUrlInNewTab(shareLink);
+                  },
+                  child: const Text('開く'),
+                ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('閉じる'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('アップロードエラー: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        
+        // Fallback to manual method
+        _shareToOneDrive(context, event);
+      }
+    }
+  }
+
+  Future<void> _uploadToSharePoint(BuildContext context, Event event) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('SharePointにアップロード中...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final csvService = CsvService();
+      final csvContent = csvService.exportEventToCsv(event);
+      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+
+      final cloudService = CloudStorageService();
+      final shareLink = await cloudService.uploadToSharePoint(
+        fileName: filename,
+        content: csvContent,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('✅ アップロード成功'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('SharePointにアップロードしました！'),
+                const SizedBox(height: 16),
+                if (shareLink != null) ...[
+                  const Text('共有リンク:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    shareLink,
+                    style: const TextStyle(fontSize: 12, color: Colors.blue),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              if (shareLink != null)
+                TextButton(
+                  onPressed: () {
+                    FileHelper.openUrlInNewTab(shareLink);
+                  },
+                  child: const Text('開く'),
+                ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('閉じる'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('アップロードエラー: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        
+        // Fallback to manual method
+        _shareToSharePoint(context, event);
+      }
+    }
   }
 
   void _shareToOneDrive(BuildContext context, Event event) {
