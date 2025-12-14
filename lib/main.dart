@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'services/event_service.dart';
 import 'services/contact_service.dart';
 import 'providers/event_provider.dart';
@@ -8,6 +9,9 @@ import 'screens/event_list_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize date formatting for Japanese locale
+  await initializeDateFormatting('ja_JP', null);
   
   // Initialize services
   final eventService = EventService();

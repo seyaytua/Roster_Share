@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
@@ -191,10 +192,26 @@ class _EventListScreenState extends State<EventListScreen> {
     if (confirm != true) return;
 
     try {
+      // デバッグ: サンプルデータ生成開始
+      if (kDebugMode) {
+        debugPrint('🔥 サンプルデータ生成を開始します...');
+      }
+      
       final sampleEvents = SampleDataService.generateSampleEvents();
       
+      if (kDebugMode) {
+        debugPrint('✅ ${sampleEvents.length}件のイベントを生成しました');
+      }
+      
       for (var event in sampleEvents) {
+        if (kDebugMode) {
+          debugPrint('📝 イベント追加中: ${event.title}');
+        }
         await context.read<EventProvider>().addEvent(event);
+      }
+
+      if (kDebugMode) {
+        debugPrint('✅ 全イベントの追加が完了しました');
       }
 
       if (context.mounted) {
@@ -202,13 +219,23 @@ class _EventListScreenState extends State<EventListScreen> {
           SnackBar(
             content: Text('${sampleEvents.length}件のサンプルイベントを追加しました'),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('❌ エラー発生: $e');
+        debugPrint('スタックトレース: $stackTrace');
+      }
+      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
+          SnackBar(
+            content: Text('エラー: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -227,7 +254,7 @@ class _EventListScreenState extends State<EventListScreen> {
 
       final csvService = CsvService();
       final csvContent = csvService.exportEventsToCsv(provider.events);
-      final filename = 'roster_share_all_events_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+      final filename = 'roster_share_all_events_${DateFormat('yyyyMMdd_HHmmss', 'ja_JP').format(DateTime.now())}.csv';
       
       FileHelper.downloadFile(
         content: csvContent,
@@ -350,15 +377,21 @@ class _EventListScreenState extends State<EventListScreen> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 24),
-                  OutlinedButton.icon(
+                  ElevatedButton.icon(
                     onPressed: () => _loadSampleData(context),
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text('サンプルデータを読み込む'),
-                    style: OutlinedButton.styleFrom(
+                    icon: const Icon(Icons.auto_awesome, size: 28),
+                    label: const Text(
+                      'サンプルデータを読み込む',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                        horizontal: 32,
+                        vertical: 16,
                       ),
+                      elevation: 4,
                     ),
                   ),
                 ],

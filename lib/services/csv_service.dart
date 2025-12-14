@@ -25,7 +25,7 @@ class CsvService {
 
     // Data rows
     for (var event in events) {
-      final dateFormat = DateFormat('yyyy/MM/dd HH:mm');
+      final dateFormat = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP');
 
       if (event.participants.isEmpty) {
         // Event with no participants
@@ -96,7 +96,7 @@ class CsvService {
       final eventId = row[0].toString();
       final eventTitle = row[1].toString();
       final eventDescription = row[2].toString();
-      final eventDateTime = DateFormat('yyyy/MM/dd HH:mm').parse(row[3].toString());
+      final eventDateTime = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP').parse(row[3].toString());
       final eventLocation = row[4].toString();
       final eventNotes = row[5].toString();
 
@@ -130,7 +130,7 @@ class CsvService {
           notes: participantNotes.isEmpty ? null : participantNotes,
           respondedAt: respondedAtText.isEmpty
               ? null
-              : DateFormat('yyyy/MM/dd HH:mm').parse(respondedAtText),
+              : DateFormat('yyyy/MM/dd HH:mm', 'ja_JP').parse(respondedAtText),
         ));
       }
     }

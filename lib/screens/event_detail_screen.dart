@@ -167,7 +167,7 @@ class EventDetailScreen extends StatelessWidget {
     try {
       final csvService = CsvService();
       final csvContent = csvService.exportEventToCsv(event);
-      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss', 'ja_JP').format(DateTime.now())}.csv';
       
       FileHelper.downloadFile(
         content: csvContent,
@@ -205,7 +205,7 @@ class EventDetailScreen extends StatelessWidget {
     try {
       final csvService = CsvService();
       final csvContent = csvService.exportEventToCsv(event);
-      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss', 'ja_JP').format(DateTime.now())}.csv';
 
       final cloudService = CloudStorageService();
       final shareLink = await cloudService.uploadToGoogleDrive(
@@ -309,7 +309,7 @@ class EventDetailScreen extends StatelessWidget {
     try {
       final csvService = CsvService();
       final csvContent = csvService.exportEventToCsv(event);
-      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss', 'ja_JP').format(DateTime.now())}.csv';
 
       final cloudService = CloudStorageService();
       final shareLink = await cloudService.uploadToOneDrive(
@@ -394,7 +394,7 @@ class EventDetailScreen extends StatelessWidget {
     try {
       final csvService = CsvService();
       final csvContent = csvService.exportEventToCsv(event);
-      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+      final filename = '${event.title}_${DateFormat('yyyyMMdd_HHmmss', 'ja_JP').format(DateTime.now())}.csv';
 
       final cloudService = CloudStorageService();
       final shareLink = await cloudService.uploadToSharePoint(
