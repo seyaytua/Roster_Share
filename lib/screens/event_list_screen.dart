@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../providers/event_provider.dart';
 import '../models/event.dart';
 import '../services/csv_service.dart';
+import '../services/sample_data_service.dart';
 import '../utils/file_helper.dart';
 import 'event_detail_screen.dart';
 import 'event_form_screen.dart';
@@ -159,6 +160,60 @@ class _EventListScreenState extends State<EventListScreen> {
     }
   }
 
+  Future<void> _loadSampleData(BuildContext context) async {
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('サンプルデータ読み込み'),
+        content: const Text(
+          'サンプルイベントを8件追加します。\n'
+          'デモや動作確認に便利です。\n\n'
+          '続行しますか？',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('読み込む'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final sampleEvents = SampleDataService.generateSampleEvents();
+      
+      for (var event in sampleEvents) {
+        await context.read<EventProvider>().addEvent(event);
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${sampleEvents.length}件のサンプルイベントを追加しました'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    }
+  }
+
   void _exportAllCsv(BuildContext context) {
     try {
       final provider = context.read<EventProvider>();
@@ -288,6 +343,18 @@ class _EventListScreenState extends State<EventListScreen> {
                   Text(
                     '右下の + ボタンから新規作成',
                     style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
+                    onPressed: () => _loadSampleData(context),
+                    icon: const Icon(Icons.auto_awesome),
+                    label: const Text('サンプルデータを読み込む'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
                   ),
                 ],
               ),
