@@ -282,6 +282,11 @@ class _EventListScreenState extends State<EventListScreen> {
             onPressed: () => _exportAllCsv(context),
           ),
           IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            tooltip: 'サンプルデータ読み込み',
+            onPressed: () => _loadSampleData(context),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               context.read<EventProvider>().loadEvents();
